@@ -3,8 +3,8 @@
 //
 #include <Arduino.h>
 #include <Servo.h>
+#include <animemometer.h>
 
-#define WIND_SENSOR A0
 #define MOISTURE_SENSOR A1
 #define TOP_SERVO 3
 #define TOP_SERVO_POWER 4
@@ -13,7 +13,7 @@
 Servo topServo;
 Servo bottomServo;
 
-constexpr int threshold = 500;
+constexpr int THRESHOLD = 500;
 
 /*
  * This function tells a servo to complete its task under n milliseconds.
@@ -61,6 +61,8 @@ void informWemos() {}
 
 int readSensor() {
     const int value = analogRead(MOISTURE_SENSOR);  // Read the analog value form sensor
+    Serial.print("Moisture Sensor Value: ");
+    Serial.println(value);
     return value;                       // Return analog moisture value
 }
 
@@ -76,6 +78,9 @@ void setup() {
     topServo.write(0);
     bottomServo.write(0);
 
+    pinMode(WIND_SENSOR, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(WIND_SENSOR), countPulse, FALLING);
+
     _runOnce();
 }
 
@@ -87,11 +92,13 @@ void setup() {
 // }
 
 void loop() {
-    if (readSensor() > threshold) {
+    mainLoop();
+    if (readSensor() > THRESHOLD) {
         writeDelay(90, 10000, &topServo, &bottomServo);
         informWemos();
     } else {
         writeDelay(0, 10000, &topServo, &bottomServo);
+        informWemos();
     }
     delay(1000);
 }
